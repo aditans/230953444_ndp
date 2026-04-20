@@ -1,5 +1,49 @@
 ﻿# 230953444_ndp
 
+ip dhcp pool voice_pool 
+
+network 192.168.2.0 255.255.25.0
+
+default-router 192.168.2.1
+
+option 150 ip 192.168.2.1
+
+
+
+telephony-service
+
+max-ephones 5
+
+max-dn 5
+
+ip source-address 192.168.2.1 port 2000
+
+exit 
+
+
+
+ephone-dn 1
+
+number xxxx
+
+
+
+dial-peer voice 1 voip
+
+destination-pattern 2...
+
+session target ipv4:10.0.0.2
+
+
+
+interface range <name>
+
+sitchport mode access
+
+switchport voice vlan 1
+
+
+
 
 When you configure OSPF and RIP in different parts of the network (like your diagram), they do NOT automatically understand each other’s routes. That’s where things change.
 
