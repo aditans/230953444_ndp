@@ -44,6 +44,51 @@ switchport voice vlan 1
 
 
 
+Configuring Network Address Translation (NAT) allows your internal private IP addresses (like your 192.168.2.0 network) to be translated into a public IP address so your devices can communicate with outside networks, like the Internet.
+
+The most common type of NAT used in networking (and Packet Tracer labs) is PAT (Port Address Translation), also known as NAT Overload. This allows multiple internal devices to share a single outside IP address.
+
+Here is how to configure PAT step-by-step on your router to allow your internal devices to reach the outside world.
+
+Step 1: Define the Inside and Outside Interfaces
+The router needs to know which interface connects to your local, private network (Inside) and which interface connects to the public, outside network (Outside).
+
+Assuming FastEthernet0/0 is your local LAN (192.168.2.0) and FastEthernet0/1 is your WAN link heading out to the internet (10.0.0.2):
+
+Plaintext
+Router> enable
+Router# configure terminal
+
+! Define the local network as the Inside interface
+Router(config)# interface FastEthernet0/0
+Router(config-if)# ip nat inside
+Router(config-if)# exit
+
+! Define the WAN/Internet link as the Outside interface
+Router(config)# interface FastEthernet0/1
+Router(config-if)# ip nat outside
+Router(config-if)# exit
+Step 2: Create an Access Control List (ACL)
+You must tell the router which internal IP addresses are allowed to be translated. We do this by creating a standard ACL that matches your internal subnet.
+
+To permit the 192.168.2.0 /24 network, you will use its wildcard mask (0.0.0.255):
+
+
+Router(config)# access-list 1 permit 192.168.2.0 0.0.0.255
+
+Step 3: Configure the NAT Overload Rule
+Finally, you tie it all together. This command tells the router: "Take the IP addresses permitted in Access List 1, translate them using the IP address assigned to FastEthernet0/1, and overload it so multiple devices can use it at once."
+
+Router(config)# ip nat inside source list 1 interface FastEthernet0/1 overload
+
+How to Verify it is Working
+Once configured, you can send a ping from one of your internal PCs to an outside IP address (like a server on the other side of your WAN). Then, hop back onto your router and run this command:
+
+Router# show ip nat translations
+This will display a table showing exactly how your internal IPs (Inside Local) are being mapped to the router's outside IP (Inside Global) along with their specific port numbers.
+
+Are you trying to set up this NAT to allow your PCs to reach an external "Internet" router, or are you trying to make a specific internal device (like a web server) reachable from the outside using Static NAT?
+
 
 When you configure OSPF and RIP in different parts of the network (like your diagram), they do NOT automatically understand each other’s routes. That’s where things change.
 
