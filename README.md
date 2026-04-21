@@ -16,13 +16,13 @@ When a device connects to the network, it broadcasts a request. The router (acti
 3. Set the default router (gateway) and any specific options (like DNS or Option 150 for VoIP).
 
 ### **Example Configuration**
-` ``text
+```
 Router(config)# ip dhcp excluded-address 192.168.1.1
 Router(config)# ip dhcp pool DATA_POOL
 Router(dhcp-config)# network 192.168.1.0 255.255.255.0
 Router(dhcp-config)# default-router 192.168.1.1
 Router(dhcp-config)# dns-server 8.8.8.8
-` ``
+```
 
 ---
 
