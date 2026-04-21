@@ -11,9 +11,9 @@ DHCP automates the process of assigning IP addresses, subnet masks, default gate
 When a device connects to the network, it broadcasts a request. The router (acting as the DHCP server) responds with an available IP address from a predefined "pool."
 
 ### **Key Configuration Steps**
-1. Exclude the gateway IPs so the router doesn't assign its own address to a PC.
+1. Exclude the gateway IPs so the router doesn't assign its own address.
 2. Create the DHCP pool and define the network range.
-3. Set the default router (gateway) and any specific options (like DNS or Option 150 for VoIP).
+3. Set the default router (gateway) and any specific options.
 
 ### **Example Configuration**
 ```
@@ -24,26 +24,41 @@ Router(dhcp-config)# default-router 192.168.1.1
 Router(dhcp-config)# dns-server 8.8.8.8
 ```
 
+### **DHCP Relay (IP Helper)**
+If your DHCP server is on a different router than your PCs or Phones, routers will block the DHCP broadcast. You must tell the local router interface to forward requests directly to the centralized DHCP server using `ip helper-address`.
+
+```
+Router(config)# interface FastEthernet0/0
+Router(config-if)# ip helper-address 10.0.0.1
+```
+
 ---
 
 ## 2. VoIP (Voice over IP) & CME
 Voice over IP allows telephone calls to be routed over standard data networks. In Cisco Packet Tracer, routers act as a Call Manager Express (CME) to handle phone registrations and assign extensions.
 
 ### **How It Works**
-IP Phones get their IP address and TFTP server address (via DHCP Option 150). They download their configuration from the router, register with the `telephony-service`, and are assigned an extension number (`ephone-dn`). If calling a different router, a `dial-peer` is required to route the traffic.
+IP Phones must first get an IP address and the TFTP server address (via DHCP Option 150) to download their configurations. They then register with the `telephony-service` and are assigned an extension number (`ephone-dn`). 
 
 ### **Example Configuration**
-**Part A: The Call Manager**
+
+**Part A: The Voice DHCP Pool**
+```
+Router(config)# ip dhcp pool VOICE_POOL
+Router(dhcp-config)# network 192.168.2.0 255.255.255.0
+Router(dhcp-config)# default-router 192.168.2.1
+Router(dhcp-config)# option 150 ip 192.168.2.1
+```
+
+**Part B: The Call Manager & Extensions**
 ```
 Router(config)# telephony-service
 Router(config-telephony)# max-ephones 5
 Router(config-telephony)# max-dn 5
 Router(config-telephony)# ip source-address 192.168.2.1 port 2000
 Router(config-telephony)# auto assign 1 to 5
-```
+Router(config-telephony)# exit
 
-**Part B: Assigning Extensions**
-```
 Router(config)# ephone-dn 1
 Router(config-ephone-dn)# number 1001
 ```
@@ -60,9 +75,6 @@ Router(config-dial-peer)# session target ipv4:10.0.0.2
 ## 3. FTP (File Transfer Protocol)
 FTP is used to transfer files between devices. In network administration, it is primarily used to back up router configurations (`running-config`) or upgrade the Cisco IOS software images to a centralized server.
 
-### **How It Works**
-FTP operates on a client-server model using TCP ports 20 and 21. You configure an FTP server in your topology, ensure the router can ping it, and then execute the copy commands.
-
 ### **Example Configuration**
 ```
 ! Optional: Set default credentials if your FTP server requires login
@@ -78,33 +90,53 @@ Destination filename [router-confg]? backup-config.txt
 ---
 
 ## 4. NAT (Network Address Translation)
-NAT translates private IP addresses (which cannot route on the public internet) into a public IP address. The most common form in Packet Tracer is **PAT (Port Address Translation)** or "NAT Overload," which allows an entire local network to share a single public WAN IP.
+NAT translates private IP addresses (which cannot route on the public internet) into public IP addresses. When a packet leaves the internal network, NAT translates its local IP to a global IP, and reverses the process when packets return.
 
-### **How It Works**
-The router identifies internal traffic (`inside`) trying to reach the internet (`outside`). It checks an Access Control List (ACL) to see if the traffic is permitted, translates the private IP to the public IP, and tracks the session using port numbers.
+### **Terminology of NAT**
+* **Inside Local:** A region inside the Enterprise network where hosts have Private IP addresses.
+* **Inside Global:** A region inside the Enterprise network that uses Public IP addresses (usually connected to the outside network/Internet).
+* **Outside Local:** A region in a public Internet where hosts have private IP addresses.
+* **Outside Global:** A region in a public Internet where Public IP addresses are used.
 
-### **Example Configuration**
+### **Static NAT**
+In Static NAT, IP addresses are statically mapped to each other through manual configuration. There are two types:
+
+**1. Inside Static NAT**
+This involves the static mapping of the Inside Local IP (private) to the Inside Global IP (public). Private IP addresses remain hidden from the outside network.
+
 ```
-! 1. Define inside and outside interfaces
-Router(config)# interface FastEthernet0/0
-Router(config-if)# ip nat inside
-Router(config)# interface FastEthernet0/1
-Router(config-if)# ip nat outside
+R1(config)# int f0/0
+R1(config-if)# ip nat outside
+R1(config-if)# exit
 
-! 2. Create an ACL for your local network
-Router(config)# access-list 1 permit 192.168.2.0 0.0.0.255
+R1(config)# int f1/0
+R1(config-if)# ip nat inside
+R1(config-if)# exit
 
-! 3. Apply the Overload rule
-Router(config)# ip nat inside source list 1 interface FastEthernet0/1 overload
+! Enable Inside Static NAT mapping
+R1(config)# ip nat inside source static 10.1.1.2 20.1.1.1
+```
+
+**2. Outside Static NAT**
+This involves the static mapping of the Outside Global IP (public) to an Outside Local IP (private). The real external IP addresses remain hidden from the hosts.
+
+```
+R1(config)# int f0/0
+R1(config-if)# ip nat outside
+R1(config-if)# exit
+
+R1(config)# int f1/0
+R1(config-if)# ip nat inside
+R1(config-if)# exit
+
+! Enable Outside Static NAT mapping
+R1(config)# ip nat outside source static 30.1.1.1 192.168.1.2
 ```
 
 ---
 
 ## 5. NTP (Network Time Protocol)
 NTP synchronizes the clocks of network devices to a central time server. This is critical for security, logging, and troubleshooting, as system logs are useless if every router has a different timestamp.
-
-### **How It Works**
-You designate one device (usually a dedicated server in Packet Tracer) as the NTP master. All routers are then configured to point to that server's IP address to sync their internal hardware clocks.
 
 ### **Example Configuration**
 ```
