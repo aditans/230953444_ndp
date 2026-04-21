@@ -34,26 +34,26 @@ IP Phones get their IP address and TFTP server address (via DHCP Option 150). Th
 
 ### **Example Configuration**
 **Part A: The Call Manager**
-` ``text
+```
 Router(config)# telephony-service
 Router(config-telephony)# max-ephones 5
 Router(config-telephony)# max-dn 5
 Router(config-telephony)# ip source-address 192.168.2.1 port 2000
 Router(config-telephony)# auto assign 1 to 5
-` ``
+```
 
 **Part B: Assigning Extensions**
-` ``text
+```
 Router(config)# ephone-dn 1
 Router(config-ephone-dn)# number 1001
-` ``
+```
 
 **Part C: Routing Calls to Another Router**
-` ``text
+```
 Router(config)# dial-peer voice 1 voip
 Router(config-dial-peer)# destination-pattern 2...
 Router(config-dial-peer)# session target ipv4:10.0.0.2
-` ``
+```
 
 ---
 
@@ -64,7 +64,7 @@ FTP is used to transfer files between devices. In network administration, it is 
 FTP operates on a client-server model using TCP ports 20 and 21. You configure an FTP server in your topology, ensure the router can ping it, and then execute the copy commands.
 
 ### **Example Configuration**
-` ``text
+```
 ! Optional: Set default credentials if your FTP server requires login
 Router(config)# ip ftp username admin
 Router(config)# ip ftp password cisco
@@ -73,7 +73,7 @@ Router(config)# ip ftp password cisco
 Router# copy running-config ftp:
 Address or name of remote host []? 192.168.1.100
 Destination filename [router-confg]? backup-config.txt
-` ``
+```
 
 ---
 
@@ -84,7 +84,7 @@ NAT translates private IP addresses (which cannot route on the public internet) 
 The router identifies internal traffic (`inside`) trying to reach the internet (`outside`). It checks an Access Control List (ACL) to see if the traffic is permitted, translates the private IP to the public IP, and tracks the session using port numbers.
 
 ### **Example Configuration**
-` ``text
+```
 ! 1. Define inside and outside interfaces
 Router(config)# interface FastEthernet0/0
 Router(config-if)# ip nat inside
@@ -96,7 +96,7 @@ Router(config)# access-list 1 permit 192.168.2.0 0.0.0.255
 
 ! 3. Apply the Overload rule
 Router(config)# ip nat inside source list 1 interface FastEthernet0/1 overload
-` ``
+```
 
 ---
 
@@ -107,14 +107,14 @@ NTP synchronizes the clocks of network devices to a central time server. This is
 You designate one device (usually a dedicated server in Packet Tracer) as the NTP master. All routers are then configured to point to that server's IP address to sync their internal hardware clocks.
 
 ### **Example Configuration**
-` ``text
+```
 ! Point the router to the NTP server
 Router(config)# ntp server 192.168.1.50
 
 ! Verify the synchronization
 Router# show ntp status
 Router# show clock
-` ``
+```
 
 ---
 
