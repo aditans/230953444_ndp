@@ -70,6 +70,15 @@ Router(config-dial-peer)# destination-pattern 2...
 Router(config-dial-peer)# session target ipv4:10.0.0.2
 ```
 
+switch
+```
+Switch> enable
+Switch# configure terminal
+Switch(config)# interface range f0/1-5
+Switch(config-if-range)# switchport mode access
+Switch(config-if-range)# switchport voice vlan 1
+```
+
 ---
 
 ## 3. FTP (File Transfer Protocol)
